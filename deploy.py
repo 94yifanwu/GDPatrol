@@ -65,13 +65,15 @@ def run():
             )
 
         try:
-            lmb.get_function(FunctionName="GDPatrol")
-            lmb.delete_function(FunctionName="GDPatrol")
-        except:
-            pass
+            lambda_response = lmb.get_function(FunctionName="GDPatrol")
+            if(lambda_response["ResponseMetadata"]["HTTPStatusCode"] == 200):
+                lmb.delete_function(FunctionName="GDPatrol")
+        except Exception as e:
+            print(e)
+
         lambda_response = lmb.create_function(
             FunctionName="GDPatrol",
-            Runtime="python3.9",
+            Runtime="python3.12",
             Role=lambda_role_arn,
             Handler="lambda_function.lambda_handler",
             Layers=[
