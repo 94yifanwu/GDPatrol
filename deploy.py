@@ -64,31 +64,34 @@ def run():
                 )
             )
 
+        target_arn = ""
         try:
-            lambda_response = lmb.get_function(FunctionName="GDPatrol")
-            if(lambda_response["ResponseMetadata"]["HTTPStatusCode"] == 200):
-                lmb.delete_function(FunctionName="GDPatrol")
+            lambda_response = lmb.update_function_code(
+                FunctionName='GDPatrol',
+                ZipFile=open(zipped, "rb").read(),
+            )
+            target_arn = lambda_response["FunctionArn"]
         except Exception as e:
             print(e)
+            lambda_response = lmb.create_function(
+                FunctionName="GDPatrol",
+                Runtime="python3.11",
+                Role=lambda_role_arn,
+                Handler="lambda_function.lambda_handler",
+                Layers=[
+                    f"arn:aws:lambda:us-east-1:{sts.get_caller_identity()['Account']}:layer:slack:1"
+                ],
+                Code={"ZipFile": open(zipped, "rb").read()},
+                Timeout=300,
+                MemorySize=128,
+                Environment={
+                    'Variables': {
+                        'DELETE_NACL_ENTRY_DRY_RUN': 'False'
+                    }
+                },
+            )
+            target_arn = lambda_response["FunctionArn"]
 
-        lambda_response = lmb.create_function(
-            FunctionName="GDPatrol",
-            Runtime="python3.11",
-            Role=lambda_role_arn,
-            Handler="lambda_function.lambda_handler",
-            Layers=[
-                f"arn:aws:lambda:us-east-1:{sts.get_caller_identity()['Account']}:layer:slack:1"
-            ],
-            Code={"ZipFile": open(zipped, "rb").read()},
-            Timeout=300,
-            MemorySize=128,
-            Environment={
-                'Variables': {
-                    'DELETE_NACL_ENTRY_DRY_RUN': 'False'
-                }
-            },
-        )
-        target_arn = lambda_response["FunctionArn"]
         target_id = "Id" + str(randrange(10**11, 10**12))
 
         # Remove targets and delete the CloudWatch rule before recreating it
