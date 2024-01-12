@@ -73,7 +73,7 @@ def run():
 
         lambda_response = lmb.create_function(
             FunctionName="GDPatrol",
-            Runtime="python3.12",
+            Runtime="python3.11",
             Role=lambda_role_arn,
             Handler="lambda_function.lambda_handler",
             Layers=[
